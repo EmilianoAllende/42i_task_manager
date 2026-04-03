@@ -3,7 +3,7 @@ export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
 
 export interface Task {
   id: string;
-  user_id: string;
+  user_id: number;
   title: string;
   description: string;
   status: TaskStatus;
