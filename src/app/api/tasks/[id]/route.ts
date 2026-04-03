@@ -55,16 +55,47 @@ export async function PUT(
   }
 }
 
-// DELETE a task
+// DELETE a task and all its subtasks recursively
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    
-    // The database should ideally have ON DELETE CASCADE for subtasks.
-    // If not, we might need to delete subtasks manually here, but for now we expect Supabase to handle it or we assume user avoids orphan tasks.
+
+    // Recursively collect all descendant task IDs before deletion
+    async function collectDescendantIds(taskId: string): Promise<string[]> {
+      const { data: children, error } = await supabase
+        .from('task_list')
+        .select('id')
+        .eq('parent_task_id', taskId);
+
+      if (error || !children || children.length === 0) return [];
+
+      const ids: string[] = children.map((c: { id: string }) => c.id);
+      for (const child of children) {
+        const nested = await collectDescendantIds(child.id);
+        ids.push(...nested);
+      }
+      return ids;
+    }
+
+    // Gather all descendant IDs
+    const descendantIds = await collectDescendantIds(id);
+
+    // Delete descendants first (deepest first to avoid FK conflicts)
+    if (descendantIds.length > 0) {
+      const { error: subtaskError } = await supabase
+        .from('task_list')
+        .delete()
+        .in('id', descendantIds);
+
+      if (subtaskError) {
+        return NextResponse.json({ error: subtaskError.message }, { status: 500 });
+      }
+    }
+
+    // Now delete the parent task
     const { error } = await supabase
       .from('task_list')
       .delete()
@@ -75,7 +106,8 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (err) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (err: any) {
+    console.error('DELETE task error:', err);
+    return NextResponse.json({ error: err.message || 'Internal server error' }, { status: 500 });
   }
 }
