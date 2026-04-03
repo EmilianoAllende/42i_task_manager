@@ -18,18 +18,27 @@ export default function Sidebar() {
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    // Check initial theme
-    if (document.documentElement.classList.contains("dark")) {
+    // Read stored theme on mount and apply it
+    const stored = localStorage.getItem('taskit_theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const shouldBeDark = stored === 'dark' || (!stored && prefersDark);
+    if (shouldBeDark) {
+      document.documentElement.classList.add('dark');
       setIsDark(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      setIsDark(false);
     }
   }, []);
 
   const toggleTheme = () => {
     if (isDark) {
       document.documentElement.classList.remove("dark");
+      localStorage.setItem('taskit_theme', 'light');
       setIsDark(false);
     } else {
       document.documentElement.classList.add("dark");
+      localStorage.setItem('taskit_theme', 'dark');
       setIsDark(true);
     }
   };
@@ -50,7 +59,7 @@ export default function Sidebar() {
     >
       {/* Header / Toggle */}
       <div className="h-16 flex items-center justify-between px-1 md:px-4 border-b border-surface-border overflow-hidden">
-        {isOpen && <span className="font-bold text-base md:text-xl text-brand-600 dark:text-brand-400 truncate">Taskflow</span>}
+        {isOpen && <span className="font-bold text-base md:text-xl text-brand-600 dark:text-brand-400 truncate">Taskit</span>}
         <button 
           onClick={() => setIsOpen(!isOpen)}
           className="p-1 md:p-1.5 rounded-lg hover:bg-surface-hover text-slate-500 mx-auto shrink-0"

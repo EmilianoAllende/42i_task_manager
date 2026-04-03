@@ -102,7 +102,7 @@ export const translations = {
     email: "Correo electrónico",
     password: "Contraseña",
     name: "Nombre completo",
-    welcome_back: "Reingreso a Taskflow",
+    welcome_back: "Reingreso a Taskit",
     create_account: "Crea tu cuenta",
     login_success: "¡Inicio de sesión exitoso!",
     register_success: "¡Cuenta creada con éxito!",

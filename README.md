@@ -1,4 +1,4 @@
-# Taskflow - Task Management System
+# Taskit - Task Management System
 
 A web platform to manage tasks, built with **Next.js (App Router)**, **Tailwind v4**, and **Supabase**.
 Features a beautiful Jira/Trello-style Kanban dashboard with a dynamic Glassmorphism interface and a dedicated Dark Mode.
