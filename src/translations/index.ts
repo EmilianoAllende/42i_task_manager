@@ -71,6 +71,10 @@ export const translations = {
     profile_title: "My Profile",
     update_profile: "Update Profile",
     update_success: "Profile updated successfully!",
+    delete_account: "Delete Account",
+    delete_account_confirm: "Delete My Account",
+    delete_account_msg: "This action is permanent and cannot be undone. All your tasks will be deleted along with your account.",
+    delete_account_success: "Account deleted successfully",
     
     // Priorities
     LOW: "Low",
@@ -150,6 +154,10 @@ export const translations = {
     profile_title: "Mi Perfil",
     update_profile: "Actualizar Perfil",
     update_success: "¡Perfil actualizado con éxito!",
+    delete_account: "Eliminar Cuenta",
+    delete_account_confirm: "Eliminar Mi Cuenta",
+    delete_account_msg: "Esta acción es permanente e irreversible. Todas tus tareas serán eliminadas junto con tu cuenta.",
+    delete_account_success: "Cuenta eliminada correctamente",
     
     // Priorities
     LOW: "Baja",
