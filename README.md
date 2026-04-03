@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Taskflow - Task Management System
 
-## Getting Started
+A web platform to manage tasks, built with **Next.js (App Router)**, **Tailwind v4**, and **Supabase**.
+Features a beautiful Jira/Trello-style Kanban dashboard with a dynamic Glassmorphism interface and a dedicated Dark Mode.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Direct Authentication**: Register and Login securely, managed in a custom `public.users` table instead of relying entirely on 3rd-party wrappers, fulfilling the secure, simple custom security challenge.
+- **Nested Subtasks**: Create n-level deep subtasks inside tasks.
+- **Effort Estimates**: Computes total combined efforts in real-time bubbling up from leaf subtasks to the top-level parent task.
+- **Kanban Board**: Drag and drop tasks flexibly between "To Do", "In Progress", and "Done" using `@hello-pangea/dnd`.
+
+## Database Setup
+
+To use this application, you must configure a Supabase Postgres instance.
+We expect the following tables inside your **`public`** schema:
+
+### `users` table
+- `id` (UUID, Primary Key, default `uuid_generate_v4()`)
+- `name` (text, not null)
+- `email` (text, unique, not null)
+- `password_hash` (text, not null)
+- `created_at` (timestampz)
+
+### `tasks` table
+- `id` (UUID, Primary Key, default `uuid_generate_v4()`)
+- `user_id` (UUID, Foreign Key to `users(id)`, not null)
+- `title` (text, not null)
+- `description` (text)
+- `status` (text: 'TODO', 'IN_PROGRESS', 'DONE', default 'TODO')
+- `priority` (text: 'LOW', 'MEDIUM', 'HIGH', 'URGENT', default 'MEDIUM')
+- `effort_estimate` (integer, default 0)
+- `parent_task_id` (UUID, Foreign Key to `tasks(id)`, nullable)
+- `created_at` (timestampz)
+
+## Environment Variables
+
+Create a `.env.local` in the root of the project:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Running the app
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+First, install dependencies:
+```bash
+npm install
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Then start the Next.js development server:
+```bash
+npm run dev
+```
 
-## Learn More
+Navigate to [http://localhost:3000](http://localhost:3000)
 
-To learn more about Next.js, take a look at the following resources:
+## Running Unit Tests
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The business logic for calculating subtask effort aggregation is tested via Vitest.
+To run the automated tests:
+```bash
+npm run test
+```
