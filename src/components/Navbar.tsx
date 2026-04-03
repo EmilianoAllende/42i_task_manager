@@ -8,12 +8,12 @@ export default function Navbar() {
   return (
     <nav className="h-16 border-b border-surface-border bg-surface/80 backdrop-blur-md flex justify-between items-center px-6 z-10">
       <div className="flex items-center gap-2">
-        <div className="bg-brand-500 text-white p-1.5 rounded-lg flex items-center justify-center">
+        <div className="bg-brand-500 text-white p-0.5 rounded-lg flex items-center justify-center">
           <Image
             src="/icons/icono_taskit.png"
             alt="Taskit icon"
-            width={20}
-            height={20}
+            width={35}
+            height={35}
             className="object-contain"
             unoptimized
           />
