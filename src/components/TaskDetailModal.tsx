@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { TaskWithSubtasks, TaskStatus, TaskPriority } from "@/types/task";
 import { Attachment } from "@/types/attachment";
-import { X, Save, Plus, CheckCircle2, Circle, AlertTriangle, Paperclip } from "lucide-react";
+import { X, Save } from "lucide-react";
 import { showToast } from "nextjs-toast-notify";
 import { useAuth } from "@/context/AuthContext";
 import { useLang } from "@/context/LanguageContext";
-import AttachmentPreview from "./AttachmentPreview";
+import DeleteConfirmOverlay from "./DeleteConfirmOverlay";
+import AttachmentSection from "./AttachmentSection";
+import SubtaskSection from "./SubtaskSection";
 
 interface Props {
   task: TaskWithSubtasks | null; // null means create new, otherwise edit
@@ -32,7 +34,6 @@ export default function TaskDetailModal({ task, initialParentId, onClose }: Prop
   // Attachments
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Drill down Navigation
   const [drillDownTask, setDrillDownTask] = useState<TaskWithSubtasks | null>(null);
@@ -78,8 +79,6 @@ export default function TaskDetailModal({ task, initialParentId, onClose }: Prop
       showToast.error(t('upload_failed'), { position: 'top-right' });
     } finally {
       setUploading(false);
-      // Reset input so same file can be re-uploaded if needed
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -160,35 +159,12 @@ export default function TaskDetailModal({ task, initialParentId, onClose }: Prop
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-surface border border-surface-border w-full max-w-2xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden relative">
         
-        {/* Custom Delete Confirmation Overlay */}
         {showDeleteConfirm && (
-          <div className="absolute inset-0 bg-surface/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 animate-in fade-in">
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-xl w-full max-w-sm border border-red-100 dark:border-red-900/30 text-center">
-              <div className="mx-auto w-12 h-12 bg-red-100 dark:bg-red-900/20 text-red-600 rounded-full flex items-center justify-center mb-4">
-                <AlertTriangle size={24} />
-              </div>
-              <h3 className="text-xl font-bold mb-2 text-slate-800 dark:text-slate-100">{t('confirm_title')}</h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-6 text-sm">
-                {t('confirm_msg')}
-              </p>
-              <div className="flex gap-3 justify-center">
-                <button 
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={deleting}
-                  className="px-4 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg font-medium transition-colors disabled:opacity-50"
-                >
-                  {t('cancel')}
-                </button>
-                <button 
-                  onClick={confirmDelete}
-                  disabled={deleting}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium shadow-md transition-all disabled:opacity-50"
-                >
-                  {deleting ? t('deleting') : t('confirm_yes')}
-                </button>
-              </div>
-            </div>
-          </div>
+          <DeleteConfirmOverlay
+            onCancel={() => setShowDeleteConfirm(false)}
+            onConfirm={confirmDelete}
+            deleting={deleting}
+          />
         )}
 
         {/* Header */}
@@ -291,85 +267,21 @@ export default function TaskDetailModal({ task, initialParentId, onClose }: Prop
             />
           </div>
 
-          {/* Attachments Section — only in edit mode */}
           {task && (
-            <div className="border-t border-surface-border pt-5">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
-                  <Paperclip size={16} /> {t('attachments')} ({attachments.length})
-                </h3>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  className="text-brand-600 dark:text-brand-400 flex items-center gap-1 text-sm font-medium hover:underline disabled:opacity-50"
-                >
-                  {uploading ? t('uploading') : `+ ${t('add_attachment')}`}
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
-                />
-              </div>
-
-              {attachments.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400 italic">{t('no_attachments')}</p>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {attachments.map(att => (
-                    <AttachmentPreview
-                      key={att.id}
-                      attachment={att}
-                      onDelete={handleDeleteAttachment}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
+            <AttachmentSection
+              attachments={attachments}
+              uploading={uploading}
+              onUpload={handleFileUpload}
+              onDelete={handleDeleteAttachment}
+            />
           )}
 
-          {/* Subtasks Section */}
           {task && (
-            <div className="border-t border-surface-border pt-5">
-              <div className="flex justify-between items-center mb-3">
-                <h3 className="font-semibold text-slate-700 dark:text-slate-200">{t('subtasks')} ({task.subtasks.length})</h3>
-                <button 
-                  onClick={() => setIsCreatingSubtask(true)}
-                  className="text-brand-600 dark:text-brand-400 flex items-center gap-1 text-sm font-medium hover:underline"
-                >
-                  <Plus size={16} /> {t('add_subtask')}
-                </button>
-              </div>
-              
-              <div className="space-y-2">
-                {task.subtasks.length === 0 && (
-                  <p className="text-sm text-slate-500 dark:text-slate-400 italic">{t('no_subtasks')}</p>
-                )}
-                {task.subtasks.map(sub => (
-                  <div 
-                    key={sub.id} 
-                    onClick={() => setDrillDownTask(sub)}
-                    className="flex justify-between items-center p-3 rounded-lg border border-surface-border bg-surface-hover/50 hover:bg-surface-hover cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      {sub.status === 'DONE' ? (
-                        <CheckCircle2 size={18} className="text-green-500" />
-                      ) : (
-                        <Circle size={18} className="text-slate-400" />
-                      )}
-                      <span className={`font-medium ${sub.status === 'DONE' ? 'line-through text-slate-400' : ''}`}>
-                        {sub.title}
-                      </span>
-                    </div>
-                    <div className="text-xs text-slate-500 font-medium">
-                      Est: {sub.total_effort}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <SubtaskSection
+              task={task}
+              onAddSubtask={() => setIsCreatingSubtask(true)}
+              onDrillDown={setDrillDownTask}
+            />
           )}
 
         </div>
