@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { TaskWithSubtasks, TaskStatus, TaskPriority } from "@/types/task";
-import { X, Save, Plus, CheckCircle2, Circle, AlertTriangle } from "lucide-react";
+import { Attachment } from "@/types/attachment";
+import { X, Save, Plus, CheckCircle2, Circle, AlertTriangle, Paperclip } from "lucide-react";
 import { showToast } from "nextjs-toast-notify";
 import { useAuth } from "@/context/AuthContext";
 import { useLang } from "@/context/LanguageContext";
+import AttachmentPreview from "./AttachmentPreview";
 
 interface Props {
   task: TaskWithSubtasks | null; // null means create new, otherwise edit
@@ -27,6 +29,11 @@ export default function TaskDetailModal({ task, initialParentId, onClose }: Prop
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Attachments
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Drill down Navigation
   const [drillDownTask, setDrillDownTask] = useState<TaskWithSubtasks | null>(null);
   const [isCreatingSubtask, setIsCreatingSubtask] = useState(false);
@@ -38,8 +45,54 @@ export default function TaskDetailModal({ task, initialParentId, onClose }: Prop
       setStatus(task.status);
       setPriority(task.priority);
       setEffortEstimate(task.effort_estimate);
+      fetchAttachments(task.id);
     }
   }, [task]);
+
+  const fetchAttachments = async (taskId: string) => {
+    try {
+      const res = await fetch(`/api/attachments?taskId=${taskId}`);
+      const data = await res.json();
+      if (res.ok) setAttachments(data.attachments);
+    } catch {}
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !task || !user) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('taskId', task.id);
+      formData.append('userId', String(user.id));
+
+      const res = await fetch('/api/attachments', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error);
+      setAttachments(prev => [...prev, data.attachment]);
+      showToast.success('File uploaded!', { position: 'top-right' });
+    } catch (err: any) {
+      showToast.error(t('upload_failed'), { position: 'top-right' });
+    } finally {
+      setUploading(false);
+      // Reset input so same file can be re-uploaded if needed
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    try {
+      const res = await fetch(`/api/attachments/${attachmentId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+      showToast.success(t('delete_attachment'), { position: 'top-right' });
+    } catch {
+      showToast.error('Failed to remove attachment', { position: 'top-right' });
+    }
+  };
 
   const handleSave = async () => {
     if (!title.trim()) {
@@ -237,6 +290,45 @@ export default function TaskDetailModal({ task, initialParentId, onClose }: Prop
               placeholder={t('description_placeholder')}
             />
           </div>
+
+          {/* Attachments Section — only in edit mode */}
+          {task && (
+            <div className="border-t border-surface-border pt-5">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                  <Paperclip size={16} /> {t('attachments')} ({attachments.length})
+                </h3>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="text-brand-600 dark:text-brand-400 flex items-center gap-1 text-sm font-medium hover:underline disabled:opacity-50"
+                >
+                  {uploading ? t('uploading') : `+ ${t('add_attachment')}`}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip"
+                />
+              </div>
+
+              {attachments.length === 0 ? (
+                <p className="text-sm text-slate-500 dark:text-slate-400 italic">{t('no_attachments')}</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  {attachments.map(att => (
+                    <AttachmentPreview
+                      key={att.id}
+                      attachment={att}
+                      onDelete={handleDeleteAttachment}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Subtasks Section */}
           {task && (

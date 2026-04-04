@@ -9,10 +9,11 @@ Features a Jira/Trello-style Kanban dashboard with glassmorphism design, dark mo
 - **Kanban Board**: Drag-and-drop tasks between "To Do", "In Progress", and "Done" columns.
 - **Nested Subtasks**: Create multi-level subtasks within any task.
 - **Effort Estimation**: Aggregates `effort_estimate` values recursively from leaf subtasks to parent tasks.
-- **i18n**: English / Spanish language switcher via a custom Language Context (no external library).
+- **File Attachments**: Upload, preview and delete images, audio, video, PDFs and other file types directly from the task detail modal (stored in Supabase Storage).
+- **i18n**: English / Spanish language switcher via a custom Language Context.
 - **Themes**: Dark / Light (Sepia) mode, persisted in `localStorage`.
 - **Profile**: Edit name and delete account (cascades deletion of all associated tasks).
-- **CRUD API**: Full RESTful API for tasks at `/api/tasks` and `/api/tasks/[id]`.
+- **CRUD API**: Full RESTful API for tasks and attachments.
 
 ---
 
@@ -51,6 +52,41 @@ create table public.task_list (
 ```
 
 > **Row-Level Security (RLS):** For development, disable RLS on both tables or add permissive policies for the `anon` role. For production, configure proper `auth.uid()` based policies.
+
+### `attachments` table
+
+```sql
+create table public.attachments (
+  id uuid not null default gen_random_uuid(),
+  task_id uuid not null,
+  user_id bigint not null,
+  file_name text not null,
+  file_type text not null,
+  file_size bigint null,
+  storage_path text not null,
+  public_url text not null,
+  created_at timestamp with time zone not null default now(),
+  constraint attachments_pkey primary key (id)
+);
+```
+
+---
+
+## Supabase Storage Setup
+
+1. Go to **Storage** in your Supabase dashboard and create a bucket named `task-attachments`, marked as **Public**.
+2. In the **SQL Editor**, run the following to allow uploads, reads and deletions:
+
+```sql
+CREATE POLICY "Allow uploads" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'task-attachments');
+
+CREATE POLICY "Allow reads" ON storage.objects
+  FOR SELECT USING (bucket_id = 'task-attachments');
+
+CREATE POLICY "Allow deletes" ON storage.objects
+  FOR DELETE USING (bucket_id = 'task-attachments');
+```
 
 ---
 
@@ -124,6 +160,14 @@ Tests are located in `src/utils/taskHelpers.test.ts` and cover:
 |--------|----------|-------------|
 | `PUT` | `/api/users/profile` | Update user name |
 | `DELETE` | `/api/users/delete` | Delete account and all associated tasks |
+
+### Attachments
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/attachments?taskId={id}` | Get all attachments for a task |
+| `POST` | `/api/attachments` | Upload file to Supabase Storage and save metadata |
+| `DELETE` | `/api/attachments/[id]` | Remove file from Storage and delete metadata |
 
 ---
 

@@ -76,6 +76,16 @@ export const translations = {
     delete_account_msg: "This action is permanent and cannot be undone. All your tasks will be deleted along with your account.",
     delete_account_success: "Account deleted successfully",
     
+    // Attachments
+    attachments: "Attachments",
+    add_attachment: "Add File",
+    no_attachments: "No attachments yet.",
+    uploading: "Uploading...",
+    upload_failed: "Upload failed",
+    delete_attachment: "Remove attachment",
+    download: "Download",
+    open_file: "Open file",
+
     // Priorities
     LOW: "Low",
     MEDIUM: "Medium",
@@ -159,6 +169,16 @@ export const translations = {
     delete_account_msg: "Esta acción es permanente e irreversible. Todas tus tareas serán eliminadas junto con tu cuenta.",
     delete_account_success: "Cuenta eliminada correctamente",
     
+    // Attachments
+    attachments: "Adjuntos",
+    add_attachment: "Añadir Archivo",
+    no_attachments: "Sin archivos adjuntos.",
+    uploading: "Subiendo...",
+    upload_failed: "Error al subir",
+    delete_attachment: "Eliminar adjunto",
+    download: "Descargar",
+    open_file: "Abrir archivo",
+
     // Priorities
     LOW: "Baja",
     MEDIUM: "Media",

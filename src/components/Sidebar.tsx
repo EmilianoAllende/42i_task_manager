@@ -54,7 +54,7 @@ export default function Sidebar() {
       className={`
         bg-surface border-r border-surface-border transition-all duration-300 ease-in-out
         flex flex-col h-full relative z-40
-        ${isOpen ? 'w-32 md:w-64' : 'w-8 md:w-16'}
+        ${isOpen ? 'w-32 md:w-50' : 'w-8 md:w-16'}
       `}
     >
       {/* Header / Toggle */}
@@ -62,7 +62,7 @@ export default function Sidebar() {
         {isOpen && <span className="font-bold text-base md:text-xl text-brand-600 dark:text-brand-400 truncate">Taskit</span>}
         <button 
           onClick={() => setIsOpen(!isOpen)}
-          className="p-1 md:p-1.5 rounded-lg hover:bg-surface-hover text-slate-500 mx-auto shrink-0"
+          className="p-1 md:p-1.5 rounded-lg hover:bg-surface-hover text-slate-500 ml-auto shrink-0"
         >
           {isOpen ? <X size={20} /> : <Menu size={20} />}
         </button>

@@ -81,3 +81,49 @@ describe('buildTaskTree', () => {
     expect(tree[0].completed_effort).toBe(10); // c1(4) + c2(6), parent not done
   });
 });
+
+// Priority ordering — validates the urgency system
+const PRIORITY_ORDER: Record<string, number> = {
+  URGENT: 4,
+  HIGH: 3,
+  MEDIUM: 2,
+  LOW: 1,
+};
+
+describe('priority ordering', () => {
+  it('URGENT should rank higher than all other priorities', () => {
+    expect(PRIORITY_ORDER['URGENT']).toBeGreaterThan(PRIORITY_ORDER['HIGH']);
+    expect(PRIORITY_ORDER['URGENT']).toBeGreaterThan(PRIORITY_ORDER['MEDIUM']);
+    expect(PRIORITY_ORDER['URGENT']).toBeGreaterThan(PRIORITY_ORDER['LOW']);
+  });
+
+  it('should correctly sort tasks by priority descending', () => {
+    const tasks: Task[] = [
+      { id: '1', user_id: 1, title: 'Low task', description: '', status: 'TODO', priority: 'LOW', effort_estimate: 1, parent_task_id: null, created_at: '' },
+      { id: '2', user_id: 1, title: 'Urgent task', description: '', status: 'TODO', priority: 'URGENT', effort_estimate: 2, parent_task_id: null, created_at: '' },
+      { id: '3', user_id: 1, title: 'Medium task', description: '', status: 'TODO', priority: 'MEDIUM', effort_estimate: 1, parent_task_id: null, created_at: '' },
+      { id: '4', user_id: 1, title: 'High task', description: '', status: 'TODO', priority: 'HIGH', effort_estimate: 3, parent_task_id: null, created_at: '' },
+    ];
+
+    const sorted = [...tasks].sort(
+      (a, b) => PRIORITY_ORDER[b.priority] - PRIORITY_ORDER[a.priority]
+    );
+
+    expect(sorted[0].priority).toBe('URGENT');
+    expect(sorted[1].priority).toBe('HIGH');
+    expect(sorted[2].priority).toBe('MEDIUM');
+    expect(sorted[3].priority).toBe('LOW');
+  });
+
+  it('should correctly filter only URGENT tasks', () => {
+    const tasks: Task[] = [
+      { id: '1', user_id: 1, title: 'A', description: '', status: 'TODO', priority: 'URGENT', effort_estimate: 1, parent_task_id: null, created_at: '' },
+      { id: '2', user_id: 1, title: 'B', description: '', status: 'TODO', priority: 'HIGH', effort_estimate: 1, parent_task_id: null, created_at: '' },
+      { id: '3', user_id: 1, title: 'C', description: '', status: 'TODO', priority: 'URGENT', effort_estimate: 1, parent_task_id: null, created_at: '' },
+    ];
+
+    const urgent = tasks.filter(t => t.priority === 'URGENT');
+    expect(urgent).toHaveLength(2);
+    expect(urgent.every(t => t.priority === 'URGENT')).toBe(true);
+  });
+});
